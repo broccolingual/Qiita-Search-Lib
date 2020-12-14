@@ -47,7 +47,10 @@ def search_contents_text(soup) -> str:
 
 def async_get_all_contents(keyword, limit=1):
     loop = asyncio.get_event_loop()
-    tasks = [async_get_page(keyword, page=i) for i in range(1, limit+1)]
+    async def limited_get_contents(keyword, page):
+        async with asyncio.Semaphore(3):
+            return await async_get_page(keyword, page=page)
+    tasks = [limited_get_contents(keyword, page=i) for i in range(1, limit+1)]
     results = loop.run_until_complete(asyncio.gather(*tasks))
     all_list = []
     for result in results:
